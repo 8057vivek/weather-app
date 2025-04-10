@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🌤️ Ultimate Weather App</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+      color: #fff;
+      transition: all 0.3s ease-in-out;
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      padding: 30px 25px;
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-wrap: wrap;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      backdrop-filter: blur(12px);
+    }
+
+    .left-panel {
+      flex: 1;
+      min-width: 300px;
+      padding-right: 20px;
+    }
+
+    .right-panel {
+      flex: 1;
+      min-width: 300px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h2 {
+      font-size: 26px;
+      margin-bottom: 20px;
+    }
+
+    input, button {
+      padding: 12px 15px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      margin: 6px 4px;
+      outline: none;
+    }
+
+    input {
+      width: 65%;
+      background: rgba(255,255,255,0.8);
+      color: #333;
+    }
+
+    button {
+      background-color: #fff;
+      color: #764ba2;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #f1f1f1;
+    }
+
+    #themeToggle {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background-color: #fff;
+      color: #764ba2;
+      border-radius: 50%;
+      padding: 10px 14px;
+      font-size: 18px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+
+    #weatherDisplay img {
+      margin: 15px 0;
+      width: 90px;
+    }
+
+    #weatherDisplay h3 {
+      font-size: 24px;
+      margin: 10px 0;
+    }
+
+    .history {
+      margin: 20px 0;
+      font-size: 14px;
+    }
+
+    .history span {
+      margin: 0 6px;
+      cursor: pointer;
+      text-decoration: underline;
+      color: #fff;
+      transition: color 0.3s ease;
+    }
+
+    .history span:hover {
+      color: #ffe4b5;
+    }
+
+    #clearHistoryBtn {
+      background-color: transparent;
+      color: #f9f9f9;
+      border: 1px solid #fff;
+      transition: background 0.3s ease;
+      margin-top: 15px;
+    }
+
+    #clearHistoryBtn:hover {
+      background-color: rgba(255,255,255,0.1);
+    }
+
+    canvas {
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 10px;
+      max-width: 100%;
+      width: 100%;
+    }
+
+    .precautions {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      width: 100%;
+      text-align: left;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .precautions h4 {
+      font-size: 18px;
+      margin-bottom: 10px;
+      color: #fff;
+    }
+
+    .precautions ul {
+      list-style-type: none;
+      padding-left: 10px;
+    }
+
+    .precautions li {
+      margin: 5px 0;
+      position: relative;
+      padding-left: 20px;
+    }
+
+    .precautions li::before {
+      content: "⚠️";
+      position: absolute;
+      left: 0;
+      font-size: 12px;
+    }
+
+    body.dark {
+      background: linear-gradient(135deg, #1a1a2e, #0f3460);
+    }
+
+    body.dark input {
+      background: rgba(255, 255, 255, 0.9);
+      color: #000;
+    }
+
+    body.dark button {
+      background-color: #333;
+      color: #fff;
+    }
+
+    body.dark button:hover {
+      background-color: #444;
+    }
+
+    body.dark .precautions {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    @media (max-width: 700px) {
+      .container {
+        flex-direction: column;
+      }
+      
+      .left-panel {
+        padding-right: 0;
+      }
+      
+      input {
+        width: 100%;
+        margin-bottom: 10px;
+      }
+
+      #themeToggle {
+        top: 15px;
+        right: 15px;
+        padding: 8px 12px;
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <button id="themeToggle">🌙</button>
+
+  <div class="container">
+    <div class="left-panel">
+      <h2>Ultimate Weather App</h2>
+      <input type="text" id="cityInput" placeholder="Enter city name">
+      <button id="searchBtn">Search</button>
+      <br>
+      <button id="locBtn">📍 Use My Location</button>
+      <button id="toggleBtn">Switch to °F</button>
+      <div id="weatherDisplay" style="margin-top: 20px;"></div>
+    </div>
+    <div class="right-panel">
+      <canvas id="forecastChart" width="400" height="200"></canvas>
+      <div id="precautionDisplay" class="precautions"></div>
+      <button id="clearHistoryBtn">Clear History</button>
+      <div class="history" id="history"></div>
+    </div>
+  </div>
+
+  <script>
+    const apiKey = "f5ff431d799a0c9d144e62c0fbd38a8e";
+    const cityInput = document.getElementById('cityInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const locBtn = document.getElementById('locBtn');
+    const toggleBtn = document.getElementById('toggleBtn');
+    const weatherDisplay = document.getElementById('weatherDisplay');
+    const historyDiv = document.getElementById('history');
+    const precautionDisplay = document.getElementById('precautionDisplay');
+    const clearHistoryBtn = document.getElementById("clearHistoryBtn");
+    const themeToggle = document.getElementById("themeToggle");
+    let chart;
+
+    let unit = "metric"; // Default: Celsius
+    let isCelsius = true;
+    let lastCity = "";
+
+    function updateUI(data) {
+      const html = `
+        <h3>${data.name}, ${data.sys.country}</h3>
+        <p>${new Date(data.dt * 1000).toLocaleString()}</p>
+        <img src="https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png" alt="">
+        <p>${data.weather[0].main} - ${data.weather[0].description}</p>
+        <h2>${data.main.temp.toFixed(1)}°${isCelsius ? 'C' : 'F'}</h2>
+        <p>Humidity: ${data.main.humidity}%</p>
+        <p>Wind: ${data.wind.speed} ${isCelsius ? 'm/s' : 'mph'}</p>
+      `;
+      weatherDisplay.innerHTML = html;
+      displayPrecautions(data.weather[0].main); // Display precautions based on weather
+    }
+
+    async function fetchWeather(city) {
+      try {
+        const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=${unit}`);
+        if (!res.ok) throw new Error("City not found");
+        const data = await res.json();
+        updateUI(data);
+        saveToHistory(city);
+        fetchForecast(city);
+      } catch (err) {
+        weatherDisplay.innerHTML = `<p>${err.message}</p>`;
+      }
+    }
+
+    async function fetchWeatherByCoords(lat, lon) {
+      try {
+        const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=${unit}`);
+        const data = await res.json();
+        updateUI(data);
+        saveToHistory(data.name);
+        fetchForecast(data.name);
+      } catch (err) {
+        weatherDisplay.innerHTML = `<p>Error fetching location data.</p>`;
+      }
+    }
+
+    async function fetchForecast(city) {
+      const res = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=${unit}`);
+      const data = await res.json();
+      const labels = data.list.filter((_, i) => i % 8 === 0).map(d => new Date(d.dt * 1000).toLocaleDateString());
+      const temps = data.list.filter((_, i) => i % 8 === 0).map(d => d.main.temp);
+
+      if (chart) chart.destroy();
+      const ctx = document.getElementById('forecastChart').getContext('2d');
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: `Temp (°${isCelsius ? 'C' : 'F'})`,
+            data: temps,
+            fill: true,
+            borderColor: '#fff',
+            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { ticks: { color: '#fff' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+            x: { ticks: { color: '#fff' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+          },
+          plugins: {
+            legend: { labels: { color: '#fff' } }
+          }
+        }
+      });
+    }
+
+    function saveToHistory(city) {
+      let history = JSON.parse(localStorage.getItem('weatherHistory')) || [];
+      if (!history.includes(city)) {
+        history.unshift(city);
+        if (history.length > 5) history.pop();
+        localStorage.setItem('weatherHistory', JSON.stringify(history));
+      }
+      lastCity = city;
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const history = JSON.parse(localStorage.getItem('weatherHistory')) || [];
+      historyDiv.innerHTML = 'Recent: ' + history.map(city => `<span onclick="fetchWeather('${city}')">${city}</span>`).join(' ');
+    }
+
+    function displayPrecautions(weatherMain) {
+      let precautions = '';
+
+      switch (weatherMain.toLowerCase()) {
+        case 'rain':
+          precautions = `
+            <h4>Precautions for Rainy Weather</h4>
+            <ul>
+              <li>Carry an umbrella or raincoat.</li>
+              <li>Avoid flooded areas to prevent accidents.</li>
+              <li>Drive slowly and keep distance from other vehicles.</li>
+            </ul>
+          `;
+          break;
+        case 'snow':
+          precautions = `
+            <h4>Precautions for Snowy Weather</h4>
+            <ul>
+              <li>Wear warm clothing and non-slip boots.</li>
+              <li>Clear snow from walkways to avoid slipping.</li>
+              <li>Keep emergency supplies in your vehicle.</li>
+            </ul>
+          `;
+          break;
+        case 'clear':
+          precautions = `
+            <h4>Precautions for Clear Weather</h4>
+            <ul>
+              <li>Apply sunscreen if outdoors for long.</li>
+              <li>Stay hydrated with water.</li>
+              <li>Wear sunglasses to protect your eyes.</li>
+            </ul>
+          `;
+          break;
+        case 'clouds':
+          precautions = `
+            <h4>Precautions for Cloudy Weather</h4>
+            <ul>
+              <li>Be prepared for sudden weather changes.</li>
+              <li>Carry a light jacket or umbrella.</li>
+              <li>Monitor updates for potential rain.</li>
+            </ul>
+          `;
+          break;
+        case 'thunderstorm':
+          precautions = `
+            <h4>Precautions for Thunderstorms</h4>
+            <ul>
+              <li>Stay indoors away from windows.</li>
+              <li>Avoid using electrical appliances.</li>
+              <li>Wait 30 minutes after the last thunder before going outside.</li>
+            </ul>
+          `;
+          break;
+        default:
+          precautions = `
+            <h4>General Precautions</h4>
+            <ul>
+              <li>Stay updated with local weather forecasts.</li>
+              <li>Carry essentials like water and a jacket.</li>
+              <li>Be cautious of changing conditions.</li>
+            </ul>
+          `;
+      }
+
+      precautionDisplay.innerHTML = precautions;
+    }
+
+    toggleBtn.addEventListener('click', () => {
+      isCelsius = !isCelsius;
+      unit = isCelsius ? 'metric' : 'imperial';
+      toggleBtn.textContent = `Switch to °${isCelsius ? 'F' : 'C'}`;
+      if (lastCity) fetchWeather(lastCity);
+    });
+
+    searchBtn.addEventListener('click', () => {
+      const city = cityInput.value.trim();
+      if (city) fetchWeather(city);
+    });
+
+    cityInput.addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') searchBtn.click();
+    });
+
+    locBtn.addEventListener('click', () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          fetchWeatherByCoords(pos.coords.latitude, pos.coords.longitude);
+        }, () => {
+          alert("Unable to access location");
+        });
+      }
+    });
+
+    clearHistoryBtn.addEventListener('click', () => {
+      localStorage.removeItem('weatherHistory');
+      historyDiv.innerHTML = '';
+    });
+
+    themeToggle.addEventListener('click', () => {
+      document.body.classList.toggle("dark");
+      themeToggle.textContent = document.body.classList.contains("dark") ? "🌞" : "🌙";
+    });
+
+    setInterval(() => {
+      if (lastCity) fetchWeather(lastCity);
+    }, 300000); // 5 minutes
+
+    window.onload = renderHistory;
+  </script>
+</body>
+</html>
